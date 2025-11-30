@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEE 370: Final Exam Practice</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { background-color: white; width: 100%; max-width: 750px; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #b1040e; margin-top: 0; }
+        .progress { text-align: right; font-size: 0.9em; color: #666; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        .question-box { font-size: 1.25em; margin-bottom: 20px; font-weight: 600; line-height: 1.4; }
+        
+        /* Image Handling */
+        .image-container { text-align: center; margin-bottom: 20px; min-height: 50px; }
+        .image-container img { max-width: 100%; max-height: 350px; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: none; /* Hidden by default until loaded */ }
+        .image-placeholder { background: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; font-size: 0.95em; border: 1px solid #ffeeba; display: inline-block; font-style: italic; }
+
+        .options { display: flex; flex-direction: column; gap: 10px; }
+        .option-btn { padding: 15px 20px; border: 2px solid #e9ecef; background-color: #fff; border-radius: 8px; cursor: pointer; text-align: left; font-size: 1em; transition: all 0.2s; position: relative; }
+        .option-btn:hover { background-color: #f8f9fa; border-color: #b1040e; }
+        
+        /* Styles for Correct/Incorrect states */
+        .correct { background-color: #d4edda !important; border-color: #28a745 !important; color: #155724; }
+        .incorrect { background-color: #f8d7da !important; border-color: #dc3545 !important; color: #721c24; }
+        
+        .feedback { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: 500; display: none; }
+        .feedback-correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .feedback-incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        /* Navigation Buttons */
+        .button-container { display: flex; justify-content: space-between; margin-top: 25px; gap: 10px; }
+        
+        .nav-btn { padding: 15px 25px; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: background 0.3s; flex: 1; }
+        
+        .prev-btn { background-color: #6c757d; color: white; visibility: hidden; } 
+        .prev-btn:hover { background-color: #5a6268; }
+        
+        .next-btn { background-color: #b1040e; color: white; visibility: hidden; }
+        .next-btn:hover { background-color: #8a030b; }
+        
+        .results { text-align: center; display: none; }
+        .score-circle { width: 160px; height: 160px; background: #b1040e; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 3em; margin: 30px auto; font-weight: bold; box-shadow: 0 4px 10px rgba(177, 4, 14, 0.4); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="quiz-screen">
+        <h1>Final Exam Review</h1>
+        <div class="progress">Question <span id="q-number">1</span> of <span id="total-q">59</span></div>
+        
+        <div id="image-wrapper" class="image-container">
+            </div>
+        
+        <div class="question-box" id="question-text">Loading...</div>
+        
+        <div class="options" id="options-container"></div>
+        
+        <div id="feedback-area" class="feedback"></div>
+        
+        <div class="button-container">
+            <button class="nav-btn prev-btn" id="prev-btn" onclick="prevQuestion()">Previous</button>
+            <button class="nav-btn next-btn" id="next-btn" onclick="nextQuestion()">Next</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="results">
+        <h1>Exam Completed!</h1>
+        <div class="score-circle" id="final-score">0%</div>
+        <p id="result-message" style="font-size: 1.2em; margin-bottom: 30px;"></p>
+        <button class="nav-btn next-btn" style="visibility: visible; margin: 0 auto; display: block;" onclick="location.reload()">Retake Exam</button>
+    </div>
+</div>
+
+<script>
+    // Data with 'cite' removed from display logic later
+    const quizData = [
+        { q: "Stress is an internal force acting on a unit area.", a: ["YES", "NO"], correct: 0 },
+        { q: "Is normal stress always perpendicular to shear stress?", a: ["YES", "NO"], correct: 0 },
+        { q: "What is a “pascal”?", a: ["N/m", "N/m²", "N·m²", "N·m"], correct: 1 },
+        { q: "Is it possible to have a state of stress at a point where σx is entering one side but exiting the opposite side (unbalanced)?", img: "slide_12.jpg", context: "Visual: Cube with unequal opposing normal vectors", a: ["YES", "NO"], correct: 1, explanation: "The normal stress in the x direction must be equal and opposite for equilibrium." },
+        { q: "Normal strain refers to the change in the length of a small line segment divided by the original length of the line segment.", a: ["YES", "NO"], correct: 0 },
+        { q: "Is a normal strain of 0.003 mm/mm equivalent to 0.003 inch/inch?", a: ["YES", "NO"], correct: 0, explanation: "Strain is a dimensionless quantity." },
+        { q: "A change in position from one location to another is called a displacement.", a: ["YES", "NO"], correct: 0 },
+        { q: "Change in shape is known as deformation.", a: ["YES", "NO"], correct: 0 },
+        { q: "Can shear strain be negative?", a: ["YES", "NO"], correct: 0 },
+        { q: "Is the material in the elastic region at point A?", img: "slide_26.jpg", context: "Visual: Stress-strain curve of a material", a: ["YES", "NO"], correct: 1 }, 
+        { q: "Which material is the softest based on the stress-strain curve slope?", img: "slide_28.jpg", context: "Visual: Stress-strain curves of a material", a: ["A (Steepest)", "B (Middle)", "C (Flattest)"], correct: 2, explanation: "The material with the lowest modulus of elasticity (flattest slope) is the softest." },
+        { q: "Do brittle materials exhibit necking?", a: ["YES", "NO"], correct: 1, explanation: "Brittle materials fail suddenly with no necking." },
+        { q: "Can the principle of superposition be used if the material yields?", a: ["YES", "NO"], correct: 1, explanation: "The material must be linear elastic." },
+        { q: "Can the reactions at A and B be determined from the equations of equilibrium alone for a fixed-fixed bar?", img: "slide_36.jpg", context: "Visual: Statically Indeterminate Fixed-Fixed Bar", a: ["YES", "NO"], correct: 1, explanation: "It is statically indeterminate; you need compatibility equations and consider load-displacement relationship." },
+        { q: "What type of equation is δ = NL/AE?", a: ["Equilibrium", "Compatibility", "Load-displacement relationship"], correct: 2 },
+        { q: "When a tube having a circular cross-section is subjected to a torque, will the cross-section remain plane after it is twisted?", a: ["YES", "NO"], correct: 0 },
+        { q: "Can the torsion formula τ = Tρ/J be used if the material is no longer elastic?", a: ["YES", "NO"], correct: 1, explanation: "Hooke's law is used in the derivation, so it must be elastic." },
+        { q: "Is 'G' called the modulus of elasticity?", a: ["YES", "NO"], correct: 1, explanation: "G is the Shear Modulus." },
+        { q: "Can the angle of twist formula φ = TL/JG be used if the material is non-linear elastic?", a: ["YES", "NO"], correct: 1, explanation: "The material must be linear elastic." },
+        { q: "Can the polar moment of inertia, 'J', be a negative quantity?", a: ["YES", "NO"], correct: 1 },
+        { q: "Is the bending stress at the neutral axis always equal to zero?", a: ["YES", "NO"], correct: 0 },
+        { q: "Can the flexure formula σ = My/I only be used if the material is linear elastic?", a: ["YES", "NO"], correct: 0, explanation: "Hooke's law was used in the derivation." },
+        { q: "The stress at the neutral axis is always zero, but can there be some strain at the neutral axis?", a: ["YES", "NO"], correct: 1, explanation: "Stress and strain must both be zero since they are related by Hooke's law." },
+        { q: "Is the bending stress the largest at the maximum distance from the neutral axis?", a: ["YES", "NO"], correct: 0 },
+        { q: "Is the bending stress distribution shown correctly here?", img: "slide_64.jpg", context: "Visual: Linear Stress Profile on T-beam", a: ["YES", "NO"], correct: 1 },
+        { q: "Is it always necessary that the material be linear elastic when applying the shear formula τ = VQ/It?", a: ["YES", "NO"], correct: 0, explanation: "The flexure formula was used in the derivation." },
+        { q: "Can the shear formula be used when the material yields?", a: ["YES", "NO"], correct: 1, explanation: "Material must be linear elastic." },
+        { q: "Does the shear formula assume the shear stress is constant along the width of the member?", a: ["YES", "NO"], correct: 0 },
+        { q: "For a rectangular cross-section, will the maximum shear stress occur at the neutral axis?", a: ["YES", "NO"], correct: 0 },
+        { q: "What are the units of shear flow, 'q'?", a: ["N/m", "N/m²", "N/m³", "N²/m"], correct: 0, explanation: "q=V[N]Q[m<sup>3</sup>]/I[m<sup>4</sup>]" },
+        { q: "For a beam having a rectangular cross-section, will the shear flow be greatest at its top or bottom?", a: ["YES", "NO"], correct: 1, explanation: "It is greatest at the neutral axis." },
+        { q: "Can the shear flow formula be used when the material yields?", a: ["YES", "NO"], correct: 1, explanation: "The material must be elastic." },
+        { q: "Is the area shown (dark blue area at the top) correct to calculate shear flow at the joint B?", img: "slide_84.jpg", context: "Visual: Box beam with top flange highlighted", a: ["YES", "NO"], correct: 0 },
+        { q: "Nails are used to fasten the flanges to the web of this beam. Is the highlighted area used to determine Q?", img: "slide_86.jpg", context: "Visual: T-beam with top flange highlighted", a: ["YES", "NO"], correct: 1 },
+        { q: "What is the smallest ratio of r/t for a pressure vessel to be classified as 'thin-walled'?", a: ["0.1", "2", "5", "10"], correct: 3 },
+        { q: "In what direction will a cylindrical pressure vessel fail?", a: ["Perpendicular to hoop (Longitudinal split)", "Radial direction", "Perpendicular to longitudinal (Circumferential split)"], correct: 0, explanation: "Hoop stress is twice the longitudinal stress." },
+        { q: "Is the stress larger in the longitudinal direction compared to that in the hoop direction for a cylindrical pressure vessel?", a: ["YES", "NO"], correct: 1 },
+        { q: "In what direction will a spherical pressure vessel fail?", a: ["Radial", "Any direction", "45° from horizontal"], correct: 1, explanation: "Stress is equal in all directions on the surface." },
+        { q: "Combined Loading: Which way does the stress caused by N (Axial force down) act on element B?", img: "slide_102.jpg", context: "Visual: Faucet Assembly", a: ["To the right", "To the left", "Up", "Down"], correct: 3 },
+        { q: "Which way does the stress caused by M act on element B?", img: "slide_102.jpg", context: "Visual: Faucet Assembly", a: ["To the right", "To the left", "Up", "Down"], correct: 2 }, 
+        { q: "Which way does the stress caused by N act on element B (L-Bracket)?", img: "slide_108.jpg", context: "Visual: L-bracket loading", a: ["To the right", "To the left", "Up", "Down"], correct: 1 },
+        { q: "Which way does the stress caused by M act on element B (L-Bracket)?", img: "slide_108.jpg", context: "Visual: L-bracket loading", a: ["To the right", "To the left", "Up", "Down"], correct: 1 },
+        { q: "Which way does the stress caused by V act on element B (L-Bracket)?", img: "slide_108.jpg", context: "Visual: L-bracket loading", a: ["To the right", "To the left", "Zero (No stress)", "Down"], correct: 2 },
+        { q: "Which way does the stress caused by N act on element C (L-Bracket)?", img: "slide_116.jpg", context: "Visual: L-bracket loading at C", a: ["To the right", "To the left", "Zero", "Down"], correct: 1 },
+        { q: "Which way does the stress caused by M act on element C (L-Bracket)?", img: "slide_116.jpg", context: "Visual: L-bracket loading at C", a: ["To the right", "To the left", "Zero", "Down"], correct: 2 },
+        { q: "Which way does the stress caused by V act on element C (L-Bracket)?", img: "slide_116.jpg", context: "Visual: L-bracket loading at C", a: ["To the right", "To the left", "Up", "Down"], correct: 2 },
+        { q: "The angle θ used in stress transformation equations is positive:", a: ["Clockwise", "Counterclockwise"], correct: 1 },
+        { q: "Is the angle θ used in the stress transformation equations measured between the x and x' axes?", a: ["YES", "NO"], correct: 0 },
+        { q: "Is this the positive sign convention for the normal and shear stresses?", img: "slide_130.jpg", context: "Visual: Stress sign convention (CCW Shear Positive)", a: ["YES", "NO"], correct: 0 },
+        { q: "Is the point (σx, τxy) on the Mohr’s circle?", a: ["YES", "NO"], correct: 0, explanation: "The point (σx, τxy) is on the Mohr's Circule." },
+        { q: "If the element is turned counterclockwise 30°, how much and in what direction is it turned on Mohr's circle?", a: ["30° clockwise", "30° counter-clockwise", "60° clockwise", "60° counter-clockwise"], correct: 3, explanation: "It is 2θ on the circle." },
+        { q: "Are the principal stresses located on the circle where the circle intersects the σ (sigma) axis?", a: ["YES", "NO"], correct: 0 },
+        { q: "Is the maximum in-plane shear stress located on the circle where the circle has its maximum and minimum values along the τ (tau) axis?", a: ["YES", "NO"], correct: 0 },
+        { q: "In plane strain equations, σx and σy are replaced by εx and εy. What replaces τxy?", a: ["εy", "εy/2", "γxy", "γxy/2"], correct: 3 },
+        { q: "Does the element deform as shown when subjected to strains +εx and -εy?", img: "slide_146.jpg", context: "Visual: Strain deformation (Elongation X, Contraction Y)", a: ["YES", "NO"], correct: 0 },
+        { q: "Does the element deform as shown when subjected to strain +γxy (positive shear)?", img: "slide_148.jpg", context: "Visual: Strain deformation (Angle decreases in first quadrant)", a: ["YES", "NO"], correct: 1 },
+        { q: "Does the element deform as shown when subjected to +εx and +εy?", img: "slide_150.jpg", context: "Visual: Strain deformation (Expansion in both axes)", a: ["YES", "NO"], correct: 0 },
+        { q: "Does the element deform as shown when subjected to +εx, +εy, +γxy?", img: "slide_152.jpg", context: "Visual: Strain deformation (Combined)", a: ["YES", "NO"], correct: 0 },
+        { q: "What is the positive direction for the angle θ used in strain transformation equations?", a: ["Clockwise", "Counterclockwise"], correct: 1 }
+    ];
+
+    // Add state tracking for each question
+    quizData.forEach(q => q.userAnswer = null);
+
+    let currentQuestion = 0;
+
+    document.getElementById('total-q').textContent = quizData.length;
+
+    function loadQuestion() {
+        const q = quizData[currentQuestion];
+        document.getElementById('q-number').textContent = currentQuestion + 1;
+        document.getElementById('question-text').textContent = q.q;
+        
+        // --- SAFE IMAGE HANDLING ---
+        const imgContainer = document.getElementById('image-wrapper');
+        imgContainer.innerHTML = ''; 
+
+        if (q.img) {
+            const img = new Image();
+            img.src = q.img;
+            
+            img.onload = function() {
+                img.style.display = 'inline-block';
+                imgContainer.appendChild(img);
+            };
+            
+            img.onerror = function() {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'image-placeholder';
+                placeholder.innerHTML = `<b>Image Missing:</b> ${q.context || "No description available."}<br><br><small>(Save slide as '${q.img}' to view)</small>`;
+                imgContainer.appendChild(placeholder);
+            };
+        } else if (q.context) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'image-placeholder';
+            placeholder.textContent = q.context;
+            imgContainer.appendChild(placeholder);
+        }
+
+        // --- OPTIONS RENDER ---
+        const optionsDiv = document.getElementById('options-container');
+        optionsDiv.innerHTML = '';
+
+        q.a.forEach((option, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = option;
+            btn.onclick = () => checkAnswer(index, btn);
+            optionsDiv.appendChild(btn);
+        });
+
+        // --- RESTORE STATE IF ANSWERED ---
+        const feedbackDiv = document.getElementById('feedback-area');
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+
+        // Manage Prev Button Visibility
+        if (currentQuestion > 0) {
+            prevBtn.style.visibility = 'visible';
+        } else {
+            prevBtn.style.visibility = 'hidden';
+        }
+
+        // Check if user has answered this specific question before
+        if (q.userAnswer !== null) {
+            updateVisuals(q.userAnswer); // Reuse logic to show colors
+            nextBtn.style.visibility = 'visible';
+            nextBtn.textContent = (currentQuestion === quizData.length - 1) ? "Finish Exam" : "Next";
+        } else {
+            // Reset for Unanswered Question
+            feedbackDiv.style.display = 'none';
+            feedbackDiv.className = 'feedback';
+            nextBtn.style.visibility = 'hidden';
+        }
+    }
+
+    function checkAnswer(selectedIndex, btnElement) {
+        const q = quizData[currentQuestion];
+        
+        // Update the user's answer (allows changing mind)
+        q.userAnswer = selectedIndex;
+
+        // Update visuals based on the new selection
+        updateVisuals(selectedIndex);
+    }
+
+    function updateVisuals(selectedIndex) {
+        const buttons = document.querySelectorAll('.option-btn');
+        // Reset all buttons first
+        buttons.forEach(btn => {
+            btn.className = 'option-btn';
+        });
+
+        const q = quizData[currentQuestion];
+        const feedbackDiv = document.getElementById('feedback-area');
+        const nextBtn = document.getElementById('next-btn');
+
+        // Apply styles based on selection
+        if (selectedIndex === q.correct) {
+            buttons[selectedIndex].classList.add('correct');
+            feedbackDiv.innerHTML = `<strong>Correct!</strong>`;
+            feedbackDiv.className = 'feedback feedback-correct';
+        } else {
+            buttons[selectedIndex].classList.add('incorrect');
+            buttons[q.correct].classList.add('correct'); // Highlight correct one too
+            let explanation = q.explanation ? `<br>${q.explanation}` : "";
+            feedbackDiv.innerHTML = `<strong>Incorrect.</strong> The correct answer is: ${q.a[q.correct]}.${explanation}`;
+            feedbackDiv.className = 'feedback feedback-incorrect';
+        }
+
+        // Show feedback and Next button
+        feedbackDiv.style.display = 'block';
+        nextBtn.style.visibility = 'visible';
+        nextBtn.textContent = (currentQuestion === quizData.length - 1) ? "Finish Exam" : "Next";
+    }
+
+    function nextQuestion() {
+        if (currentQuestion < quizData.length - 1) {
+            currentQuestion++;
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function prevQuestion() {
+        if (currentQuestion > 0) {
+            currentQuestion--;
+            loadQuestion();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        
+        // Calculate score based on final state of answers
+        let score = 0;
+        quizData.forEach(q => {
+            if (q.userAnswer === q.correct) score++;
+        });
+
+        const percentage = Math.round((score / quizData.length) * 100);
+        document.getElementById('final-score').textContent = percentage + "%";
+        
+        let msg = "";
+        if(percentage >= 90) msg = "Excellent! You are fully prepared for the final.";
+        else if(percentage >= 70) msg = "Good job! Review the slides for the questions you missed.";
+        else msg = "Keep practicing. Review Lecture 27 carefully.";
+        
+        document.getElementById('result-message').textContent = `You scored ${score} out of ${quizData.length}. ${msg}`;
+    }
+
+    // Start
+    loadQuestion();
+
+</script>
+
+</body>
+</html>
